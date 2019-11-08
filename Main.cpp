@@ -405,3 +405,80 @@ int compareBlocks(char robot, char in_slot)
 		if(robot_gtoreq_slot(robot, in_slot) == true) return 0;
 	}
 }
+
+//finds a valid spot for 'block' in 'array' and moves the robot there
+unsigned int findSpot(char block, char array[], unsigned int position) 
+{
+	position = move_to(0, position);
+	while(true)
+	{
+		if (test_empty(position, array))
+		{
+			position = shift_right(position);	
+		} else if (compareBlocks(block, array[position]) == 0)// IF block is same as one in slot
+		{
+			return position;
+		} else if ((compareBlocks(block, array[position]) == -1)) // IF block is less than one in slot
+		{
+			if (position == 0) return position;
+			else return position - 1;
+		} else // IF block is greater than one in slot
+		{
+			shift_right(position); 
+		}
+		
+	}
+	return position;
+}
+
+unsigned int move_to(unsigned int target, unsigned int position) // input must be =<19 and >=0
+{
+	while(true)
+	{
+		if(target < position) position = shift_left(position);
+		else if(target > position) position = shift_right(position);
+		else return position;
+	}
+}
+
+unsigned int nextEmpty(unsigned int position, char array[])// moves the robot to the nearest empty slot
+{
+	unsigned int nextLeft, nextRight, oldPosition = position;
+	//Look to the left
+	while (!test_empty(position, array) || position == 0)
+	{
+		position = shift_left(position);
+	}
+	if(test_empty(position, array)) nextLeft = position;
+	else nextLeft = 9999;
+	//reset position
+	position = move_to(oldPosition, position);
+	//Look to the right
+	while (!test_empty(position, array) || position == 19)
+	{
+		position = shift_right(position);
+	}
+	if(test_empty(position, array)) nextRight = position;
+	else nextRight = 9999;
+	
+	// Calculate the smaller distance, and move there
+	if(nextLeft == 9999) 
+	{
+		position = move_to(nextRight, position);
+		return position;
+	}
+
+	if(nextRight == 9999) 
+	{
+		position = move_to(nextLeft, position);
+		return position;
+	}
+
+	unsigned int deltaLeft = oldPosition - nextLeft;
+	unsigned int deltaRight = nextRight - oldPosition;
+
+	if (deltaLeft < deltaRight) position = move_to(nextLeft, position);
+	if (deltaLeft > deltaRight) position = move_to(nextRight, position);
+	return position;
+}
+
