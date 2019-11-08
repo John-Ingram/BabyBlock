@@ -20,7 +20,7 @@ int main()
 	return 0;
 }
 
-Void ShiftRight(int from, int moves) {
+void ShiftRight(int from, int moves) {
 	int end = FindNext(false, from);
 	int counter = 0;
 	char tempslot;

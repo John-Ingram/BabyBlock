@@ -6,33 +6,221 @@
 #include <iomanip>
 #include <string>
 
+#define getNextBlock get_block_testone() // Allows for changing this for test cases
+
+// Functions
+bool robot_gtoreq_slot(char robot, char in_slot);
+int compareBlocks(char robot, char in_slot);
+unsigned int move_to(unsigned int target, unsigned int position);
+unsigned int findSpot(char block, char array[], unsigned int position);
+unsigned int nextEmpty(unsigned int position, char array[]); // moves the robot to the nearest empty slot
+unsigned int placeBlock(char block, unsigned int position, char array[]); // places block in 'array' at 'position'
+char get_block(void);
+void print_slots(char slots[]);
+unsigned int put_block(char block, unsigned int position, char array[]);
+unsigned int remove_block(unsigned int position, char array[]);
+unsigned int shift_right(unsigned int position);
+unsigned int shift_left(unsigned int position);
+bool robot_ltoreq_slot(char robot, char in_slot);
+char switch_blocks(char robot, unsigned int position, char array[]);
+bool test_empty(unsigned int position, char array[]);
+char get_block_testcase(unsigned int testcase, unsigned int index);
+char get_block_testone(void);
+char get_block_testtwo(void);
+char get_block_testthree(void);
+char get_block_testfour(void);
+char get_block_testfive(void);
+
+
+
+
 using namespace std;
 
+unsigned int switchCount; //TODO: Implement counting the number of switches made
 
 int main(void)
 {
-    unsigned int position = 10;
-    char chars[20] = {};
-    char robot;
+	unsigned int position = 10, placed = 0;
+	char array[20] = {};
+	char robot;
 
-    //initial setup
-    for(int i = 0; i < 20; i++) chars[i] = NULL;
+	//initial setup
+	for (int i = 0; i < 20; i++) array[i] = NULL;
 
-    // place first block
-    robot = get_block();
-    put_block(robot, position, chars);
+	// place first block
+	robot = getNextBlock;
+	put_block(robot, position, array);
+	placed++;
 
-    
-    
+	while (placed < 20)
+	{
+		robot = getNextBlock;
+		position = findSpot(robot, array, position);
+		position = placeBlock(robot, position, array);
+		placed++;
+		print_slots(array);
+	}
 
-	
+
+
+
 	system("pause");
 	return 0;
 }
 
+// Functions
 
+bool robot_gtoreq_slot(char robot, char in_slot)
+{
+	bool debug = true;
+	if (debug)
+		cout << endl << "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
+	if (robot >= in_slot)
+	{
+		if (debug)
+			cout << "Returning true. Robot block GREATER than or EQUAL to block in slot. " << endl;
+		return true;
+	}
+	else
+	{
+		if (debug)
+			cout << "Returning false. Robot block LESS than block in slot. " << endl;
+		return false;
+	}
+}
 
+// returns -1 when 'robot' is < 'in_slot'
+// returns 0 when 'robot' is == 'in_slot'
+// returns 1 when 'robot' is > 'in_slot'
+// returns 9999 when 'in_slot' is empty
+int compareBlocks(char robot, char in_slot)
+{
+	cout << "compareBlocks";
+	if (in_slot == NULL) return 9999;
+	if (robot_ltoreq_slot(robot, in_slot) == true)
+	{
+		if (robot_gtoreq_slot(robot, in_slot) == true) return 0;
+		else
+		{
+			return -1;
+		}
 
+	}
+	else return 1;
+
+}
+
+//finds a valid spot for 'block' in 'array' and moves the robot there
+unsigned int findSpot(char block, char array[], unsigned int position)
+{
+	cout << "FindSpot";
+	position = move_to(0, position);
+	while (true)
+	{
+		if (compareBlocks(block, array[position]) == 0)// IF block is same as one in slot
+		{
+			return position;
+		}
+		else if ((compareBlocks(block, array[position]) == -1)) // IF block is less than one in slot
+		{
+			if (position == 0) return position;
+			else return position - 1;
+		}
+		else // IF block is greater than one in slot Or slot is empty
+		{
+			position = shift_right(position);
+			if (position == 19) return position;
+		}
+
+	}
+	return position;
+}
+
+unsigned int move_to(unsigned int target, unsigned int position) // input must be =<19 and >=0
+{
+	while (true)
+	{
+		if (target < position) position = shift_left(position);
+		else if (target > position) position = shift_right(position);
+		else return position;
+	}
+}
+
+unsigned int nextEmpty(unsigned int position, char array[])// moves the robot to the nearest empty slot
+{
+	unsigned int nextLeft, nextRight, oldPosition = position;
+	//Look to the left
+	while (!test_empty(position, array) && position != 0)
+	{
+		position = shift_left(position);
+	}
+	if (test_empty(position, array)) nextLeft = position;
+	else nextLeft = 9999;
+	//reset position
+	position = move_to(oldPosition, position);
+	//Look to the right
+	while (!test_empty(position, array) && position != 19)
+	{
+		position = shift_right(position);
+	}
+	if (test_empty(position, array)) nextRight = position;
+	else nextRight = 9999;
+
+	// Calculate the smaller distance, and move there
+	if (nextLeft == 9999)
+	{
+		position = move_to(nextRight, position);
+		return position;
+	}
+
+	if (nextRight == 9999)
+	{
+		position = move_to(nextLeft, position);
+		return position;
+	}
+
+	unsigned int deltaLeft = oldPosition - nextLeft;
+	unsigned int deltaRight = nextRight - oldPosition;
+
+	if (deltaLeft < deltaRight) position = move_to(nextLeft, position);
+	if (deltaLeft > deltaRight) position = move_to(nextRight, position);
+	return position;
+}
+
+unsigned int placeBlock(char block, unsigned int position, char array[]) // places block in 'array' at 'position'
+{
+
+	int direction = 0;
+	unsigned int empty, oldPosition = position;
+	if (test_empty(position, array))
+	{
+		put_block(block, position, array);
+		return position;
+	}
+	empty = position = nextEmpty(position, array);
+	position = move_to(oldPosition, position);
+	if (empty < position)
+	{
+		while (position != empty)
+		{
+			block = switch_blocks(block, position, array);
+			position = shift_left(position);
+		}
+		position = put_block(block, position, array);
+		return position;
+	}
+	if (empty > position)
+	{
+		while (position != empty)
+		{
+			block = switch_blocks(block, position, array);
+			position = shift_right(position);
+		}
+		position = put_block(block, position, array);
+		return position;
+	}
+
+}
 
 // ------------------------------------------------------------------------ //
 //																			//
@@ -143,7 +331,7 @@ unsigned int remove_block(unsigned int position, char array[])
 unsigned int shift_right(unsigned int position)
 {
 	bool debug = true;
-	if(position < 19) 
+	if (position < 19)
 	{
 		position++;
 		if (debug)
@@ -168,7 +356,7 @@ unsigned int shift_right(unsigned int position)
 unsigned int shift_left(unsigned int position)
 {
 	bool debug = true;
-	if(position > 0) position--;
+	if (position > 0) position--;
 	{
 		if (debug)
 			cout << "Position left shifted to " << position << endl;
@@ -195,7 +383,7 @@ bool robot_ltoreq_slot(char robot, char in_slot)
 {
 	bool debug = true;
 	if (debug)
-		cout << endl <<  "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
+		cout << endl << "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
 	if (robot <= in_slot)
 	{
 		if (debug)
@@ -254,7 +442,7 @@ bool test_empty(unsigned int position, char array[])
 {
 	char blank = ' '; // Blank space
 	bool debug = true;
-	if  (array[position] == NULL || array[position] == blank)
+	if (array[position] == NULL || array[position] == blank)
 	{
 		if (debug)
 			cout << "Slot " << position << " empty. " << endl;
@@ -371,114 +559,3 @@ char get_block_testfive(void)
 	char test_case_five[21] = "XXXAAAZZZAAYYVVVVQQQ";
 	return test_case_five[index++];
 }
-
-
-// Functions
-
-bool robot_gtoreq_slot(char robot, char in_slot)
-{
-	bool debug = true;
-	if (debug)
-		cout << endl <<  "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
-	if (robot >= in_slot)
-	{
-		if (debug)
-			cout << "Returning true. Robot block LESS than or EQUAL to block in slot. " << endl;
-		return true;
-	}
-	else
-	{
-		if (debug)
-			cout << "Returning false. Robot block GREATER than block in slot. " << endl;
-		return false;
-	}
-}
-
-// returns -1 when 'robot' is < 'in_slot'
-// returns 0 when 'robot' is == 'in_slot'
-// returns 1 when 'robot' is > 'in_slot'
-
-int compareBlocks(char robot, char in_slot) 
-{
-	if(robot_ltoreq_slot(robot, in_slot) == true)
-	{
-		if(robot_gtoreq_slot(robot, in_slot) == true) return 0;
-	}
-}
-
-//finds a valid spot for 'block' in 'array' and moves the robot there
-unsigned int findSpot(char block, char array[], unsigned int position) 
-{
-	position = move_to(0, position);
-	while(true)
-	{
-		if (test_empty(position, array))
-		{
-			position = shift_right(position);	
-		} else if (compareBlocks(block, array[position]) == 0)// IF block is same as one in slot
-		{
-			return position;
-		} else if ((compareBlocks(block, array[position]) == -1)) // IF block is less than one in slot
-		{
-			if (position == 0) return position;
-			else return position - 1;
-		} else // IF block is greater than one in slot
-		{
-			shift_right(position); 
-		}
-		
-	}
-	return position;
-}
-
-unsigned int move_to(unsigned int target, unsigned int position) // input must be =<19 and >=0
-{
-	while(true)
-	{
-		if(target < position) position = shift_left(position);
-		else if(target > position) position = shift_right(position);
-		else return position;
-	}
-}
-
-unsigned int nextEmpty(unsigned int position, char array[])// moves the robot to the nearest empty slot
-{
-	unsigned int nextLeft, nextRight, oldPosition = position;
-	//Look to the left
-	while (!test_empty(position, array) || position == 0)
-	{
-		position = shift_left(position);
-	}
-	if(test_empty(position, array)) nextLeft = position;
-	else nextLeft = 9999;
-	//reset position
-	position = move_to(oldPosition, position);
-	//Look to the right
-	while (!test_empty(position, array) || position == 19)
-	{
-		position = shift_right(position);
-	}
-	if(test_empty(position, array)) nextRight = position;
-	else nextRight = 9999;
-	
-	// Calculate the smaller distance, and move there
-	if(nextLeft == 9999) 
-	{
-		position = move_to(nextRight, position);
-		return position;
-	}
-
-	if(nextRight == 9999) 
-	{
-		position = move_to(nextLeft, position);
-		return position;
-	}
-
-	unsigned int deltaLeft = oldPosition - nextLeft;
-	unsigned int deltaRight = nextRight - oldPosition;
-
-	if (deltaLeft < deltaRight) position = move_to(nextLeft, position);
-	if (deltaLeft > deltaRight) position = move_to(nextRight, position);
-	return position;
-}
-
