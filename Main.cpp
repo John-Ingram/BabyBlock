@@ -36,7 +36,7 @@ char get_block_testfive(void);
 
 using namespace std;
 
-unsigned int switchCount; //TODO: Implement counting the number of switches made
+unsigned int switchCount = 0; //TODO: Implement counting the number of switches made
 
 int main(void)
 {
@@ -51,6 +51,8 @@ int main(void)
 	robot = getNextBlock;
 	put_block(robot, position, array);
 	placed++;
+	print_slots(array);
+	cout<< "Number of blocks switched: "<<switchCount<<endl;
 
 	while (placed < 20)
 	{
@@ -59,6 +61,7 @@ int main(void)
 		position = placeBlock(robot, position, array);
 		placed++;
 		print_slots(array);
+		cout<< "Number of blocks switched: "<<switchCount<<endl;
 	}
 
 
@@ -72,7 +75,7 @@ int main(void)
 
 bool robot_gtoreq_slot(char robot, char in_slot)
 {
-	bool debug = true;
+	bool debug = false;
 	if (debug)
 		cout << endl << "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
 	if (robot >= in_slot)
@@ -95,7 +98,6 @@ bool robot_gtoreq_slot(char robot, char in_slot)
 // returns 9999 when 'in_slot' is empty
 int compareBlocks(char robot, char in_slot)
 {
-	cout << "compareBlocks";
 	if (in_slot == NULL) return 9999;
 	if (robot_ltoreq_slot(robot, in_slot) == true)
 	{
@@ -110,32 +112,24 @@ int compareBlocks(char robot, char in_slot)
 
 }
 
-//finds a valid spot for 'block' in 'array' and moves the robot there
+
 unsigned int findSpot(char block, char array[], unsigned int position)
 {
-	cout << "FindSpot";
 	position = move_to(0, position);
-	while (true)
+	int i = 0;
+	while (i < 19)
 	{
-		if (compareBlocks(block, array[position]) == 0)// IF block is same as one in slot
-		{
-			return position;
-		}
-		else if ((compareBlocks(block, array[position]) == -1)) // IF block is less than one in slot
-		{
-			if (position == 0) return position;
-			else return position - 1;
-		}
-		else // IF block is greater than one in slot Or slot is empty
+		if (test_empty(position, array))
 		{
 			position = shift_right(position);
-			if (position == 19) return position;
 		}
-
+		if (compareBlocks(block, array[position]) == 0) return position;
+		if (compareBlocks(block, array[position]) == -1) return position - 1;
+		position = shift_right(position);
+		i++;
 	}
 	return position;
 }
-
 unsigned int move_to(unsigned int target, unsigned int position) // input must be =<19 and >=0
 {
 	while (true)
@@ -204,6 +198,7 @@ unsigned int placeBlock(char block, unsigned int position, char array[]) // plac
 		while (position != empty)
 		{
 			block = switch_blocks(block, position, array);
+			switchCount++;
 			position = shift_left(position);
 		}
 		position = put_block(block, position, array);
@@ -214,6 +209,8 @@ unsigned int placeBlock(char block, unsigned int position, char array[]) // plac
 		while (position != empty)
 		{
 			block = switch_blocks(block, position, array);
+			switchCount++;
+ 
 			position = shift_right(position);
 		}
 		position = put_block(block, position, array);
@@ -283,7 +280,7 @@ void print_slots(char slots[])
 
 unsigned int put_block(char block, unsigned int position, char array[])
 {
-	bool debug = true;
+	bool debug = false;
 	array[position] = block;
 	if (debug)
 		cout << "Block " << block << " inserted into slot " << position << endl;
@@ -305,7 +302,7 @@ unsigned int put_block(char block, unsigned int position, char array[])
 
 unsigned int remove_block(unsigned int position, char array[])
 {
-	bool debug = true;
+	bool debug = false;
 	char block = ' ';
 	block = array[position];
 	array[position] = ' ';  // Reset slot to blank after block removed
@@ -330,7 +327,7 @@ unsigned int remove_block(unsigned int position, char array[])
 
 unsigned int shift_right(unsigned int position)
 {
-	bool debug = true;
+	bool debug = false;
 	if (position < 19)
 	{
 		position++;
@@ -355,7 +352,7 @@ unsigned int shift_right(unsigned int position)
 
 unsigned int shift_left(unsigned int position)
 {
-	bool debug = true;
+	bool debug = false;
 	if (position > 0) position--;
 	{
 		if (debug)
@@ -381,7 +378,7 @@ unsigned int shift_left(unsigned int position)
 //
 bool robot_ltoreq_slot(char robot, char in_slot)
 {
-	bool debug = true;
+	bool debug = false;
 	if (debug)
 		cout << endl << "Comparing robot block " << robot << " with block in slot " << in_slot << endl;
 	if (robot <= in_slot)
@@ -415,7 +412,7 @@ bool robot_ltoreq_slot(char robot, char in_slot)
 char switch_blocks(char robot, unsigned int position, char array[])
 {
 	char temp_hold;
-	bool debug = true;
+	bool debug = false;
 	if (debug)
 		cout << "Switching blocks " << robot << " with " << array[position] << endl;
 	temp_hold = robot;
@@ -441,7 +438,7 @@ char switch_blocks(char robot, unsigned int position, char array[])
 bool test_empty(unsigned int position, char array[])
 {
 	char blank = ' '; // Blank space
-	bool debug = true;
+	bool debug = false;
 	if (array[position] == NULL || array[position] == blank)
 	{
 		if (debug)
