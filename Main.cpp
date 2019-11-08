@@ -1,6 +1,6 @@
-//
-//John Ingram
-//
+// John Ingram
+// Thomas Bunney
+// Daniel Balding
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -124,7 +124,11 @@ unsigned int findSpot(char block, char array[], unsigned int position)
 			position = shift_right(position);
 		}
 		if (compareBlocks(block, array[position]) == 0) return position;
-		if (compareBlocks(block, array[position]) == -1) return position - 1;
+		if (compareBlocks(block, array[position]) == -1)
+		{
+			if(position == 0) return 0;
+			return position - 1;
+		} 
 		position = shift_right(position);
 		i++;
 	}
